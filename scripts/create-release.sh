@@ -10,15 +10,15 @@ RELEASE_DIR="$PROJECT_DIR/releases"
 KEYS_DIR="$PROJECT_DIR/.sparkle-keys"
 
 # GitHub repository (owner/repo format)
-GITHUB_REPO="farouqaldori/vibe-notch"
+GITHUB_REPO="OrangeCold/cc-island-cn"
 
-# Website repo for auto-updating appcast
-WEBSITE_DIR="${CLAUDE_ISLAND_WEBSITE:-$PROJECT_DIR/../ClaudeIsland-website}"
-WEBSITE_PUBLIC="$WEBSITE_DIR/public"
+# GitHub Pages directory (serves appcast.xml). One-time setup:
+# Repo Settings → Pages → Source: Deploy from branch → main /docs.
+PAGES_DIR="$PROJECT_DIR/docs"
 
-APP_PATH="$EXPORT_PATH/Vibe Notch.app"
-APP_NAME="VibeNotch"
-KEYCHAIN_PROFILE="ClaudeIsland"
+APP_PATH="$EXPORT_PATH/CcIslandCn.app"
+APP_NAME="CcIslandCn"
+KEYCHAIN_PROFILE="CcIslandCn"
 
 echo "=== Creating Release ==="
 echo ""
@@ -51,7 +51,7 @@ if ! xcrun notarytool history --keychain-profile "$KEYCHAIN_PROFILE" &>/dev/null
     echo ""
     echo "  xcrun notarytool store-credentials \"$KEYCHAIN_PROFILE\" \\"
     echo "      --apple-id \"your@email.com\" \\"
-    echo "      --team-id \"2DKS5U9LV4\" \\"
+    echo "      --team-id \"95DR4R5FX6\" \\"
     echo "      --password \"xxxx-xxxx-xxxx-xxxx\""
     echo ""
     echo "Create an app-specific password at: https://appleid.apple.com"
@@ -100,17 +100,17 @@ fi
 if command -v create-dmg &> /dev/null; then
     echo "Using create-dmg for prettier output..."
     create-dmg \
-        --volname "Vibe Notch" \
+        --volname "CcIslandCn" \
         --window-size 600 400 \
         --icon-size 100 \
-        --icon "Vibe Notch.app" 150 200 \
+        --icon "CcIslandCn.app" 150 200 \
         --app-drop-link 450 200 \
-        --hide-extension "Vibe Notch.app" \
+        --hide-extension "CcIslandCn.app" \
         "$DMG_PATH" \
         "$APP_PATH"
 else
     echo "Using hdiutil (install create-dmg for prettier DMG: brew install create-dmg)"
-    hdiutil create -volname "Vibe Notch" \
+    hdiutil create -volname "CcIslandCn" \
         -srcfolder "$APP_PATH" \
         -ov -format UDZO \
         "$DMG_PATH"
@@ -144,7 +144,7 @@ SPARKLE_SIGN=""
 GENERATE_APPCAST=""
 
 POSSIBLE_PATHS=(
-    "$HOME/Library/Developer/Xcode/DerivedData/ClaudeIsland-*/SourcePackages/artifacts/sparkle/Sparkle/bin"
+    "$HOME/Library/Developer/Xcode/DerivedData/CcIslandCn-*/SourcePackages/artifacts/sparkle/Sparkle/bin"
 )
 
 for path_pattern in "${POSSIBLE_PATHS[@]}"; do
@@ -215,16 +215,16 @@ else
         echo "Creating release v$VERSION..."
         gh release create "v$VERSION" "$DMG_PATH" \
             --repo "$GITHUB_REPO" \
-            --title "Vibe Notch v$VERSION" \
-            --notes "## Vibe Notch v$VERSION
+            --title "CcIslandCn v$VERSION" \
+            --notes "## CcIslandCn v$VERSION
 
 ### Installation
 1. Download \`$APP_NAME-$VERSION.dmg\`
-2. Open the DMG and drag Vibe Notch to Applications
-3. Launch Vibe Notch from Applications
+2. Open the DMG and drag CcIslandCn to Applications
+3. Launch CcIslandCn from Applications
 
 ### Auto-updates
-After installation, Vibe Notch will automatically check for updates."
+After installation, CcIslandCn will automatically check for updates."
     fi
 
     GITHUB_DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/v$VERSION/$APP_NAME-$VERSION.dmg"
@@ -235,67 +235,30 @@ fi
 echo ""
 
 # ============================================
-# Step 6: Update website appcast and deploy
+# Step 6: Publish appcast to GitHub Pages (docs/)
 # ============================================
-echo "=== Step 6: Updating Website ==="
+echo "=== Step 6: Publishing appcast ==="
 
-if [ -d "$WEBSITE_PUBLIC" ] && [ -f "$RELEASE_DIR/appcast/appcast.xml" ]; then
-    # Copy appcast to website
-    cp "$RELEASE_DIR/appcast/appcast.xml" "$WEBSITE_PUBLIC/appcast.xml"
+APPCAST_SOURCE="$RELEASE_DIR/appcast/appcast.xml"
 
-    # Update the download URL in appcast to point to GitHub releases
-    if [ -n "$GITHUB_DOWNLOAD_URL" ]; then
-        sed -i '' "s|url=\"[^\"]*$APP_NAME-$VERSION.dmg\"|url=\"$GITHUB_DOWNLOAD_URL\"|g" "$WEBSITE_PUBLIC/appcast.xml"
-        echo "Updated appcast.xml with GitHub download URL"
-    fi
-
-    # Update src/config.ts with latest version and download URL (preserve other content)
-    CONFIG_FILE="$WEBSITE_DIR/src/config.ts"
-    if [ -n "$GITHUB_DOWNLOAD_URL" ]; then
-        if [ -f "$CONFIG_FILE" ]; then
-            # Update existing constants in-place
-            sed -i '' "s|export const LATEST_VERSION = .*|export const LATEST_VERSION = \"$VERSION\";|" "$CONFIG_FILE"
-            sed -i '' "s|export const DOWNLOAD_URL = .*|export const DOWNLOAD_URL = \"$GITHUB_DOWNLOAD_URL\";|" "$CONFIG_FILE"
-        else
-            # Create new config file
-            cat > "$CONFIG_FILE" << EOF
-// Auto-updated by create-release.sh
-export const LATEST_VERSION = "$VERSION";
-export const DOWNLOAD_URL = "$GITHUB_DOWNLOAD_URL";
-EOF
-        fi
-        echo "Updated src/config.ts with version $VERSION"
-    fi
-
-    # Deploy via Cloudflare Pages (manual wrangler deploy — the old GitHub
-    # repo is disabled, so git push is no longer an option).
-    cd "$WEBSITE_DIR" || exit 1
-
-    WRANGLER_PROJECT="${CLAUDE_ISLAND_WRANGLER_PROJECT:-vibenotch-website}"
-
-    read -p "Deploy website to Cloudflare Pages ($WRANGLER_PROJECT)? (Y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-        if ! command -v wrangler >/dev/null 2>&1; then
-            echo "ERROR: wrangler not found. Install with: npm install -g wrangler"
-            echo "Skipping website deploy. Appcast updated locally at $WEBSITE_PUBLIC/appcast.xml"
-        else
-            echo "Building site..."
-            npm run build
-
-            echo "Deploying to Cloudflare Pages ($WRANGLER_PROJECT)..."
-            wrangler pages deploy dist --project-name="$WRANGLER_PROJECT"
-            echo "Website deployed!"
-        fi
-    else
-        echo "Skipped Cloudflare deploy."
-        echo "To deploy manually: cd $WEBSITE_DIR && npm run build && wrangler pages deploy dist --project-name=$WRANGLER_PROJECT"
-    fi
-
-    cd "$PROJECT_DIR"
+if [ ! -f "$APPCAST_SOURCE" ]; then
+    echo "WARNING: appcast not generated (Sparkle private key missing?). Skipping publish."
 else
-    echo "Website directory not found or appcast not generated"
-    echo "Skipping website update."
+    mkdir -p "$PAGES_DIR"
+    cp "$APPCAST_SOURCE" "$PAGES_DIR/appcast.xml"
+
+    # Point enclosure URLs at the GitHub Release download assets
+    if [ -n "$GITHUB_DOWNLOAD_URL" ]; then
+        sed -i '' "s|url=\"[^\"]*$APP_NAME-$VERSION.dmg\"|url=\"$GITHUB_DOWNLOAD_URL\"|g" "$PAGES_DIR/appcast.xml"
+        echo "Updated appcast enclosure URL -> GitHub Release"
+    fi
+
+    echo ""
+    echo "appcast written to $PAGES_DIR/appcast.xml"
+    echo "Commit & push to publish via GitHub Pages:"
+    echo "  git add docs/appcast.xml && git commit -m \"chore: appcast v$VERSION\" && git push"
+    echo ""
+    echo "First-time setup: Repo Settings -> Pages -> Source: Deploy from branch -> main /docs"
 fi
 
 echo ""
@@ -310,6 +273,6 @@ fi
 if [ -n "$GITHUB_DOWNLOAD_URL" ]; then
     echo "  - GitHub: https://github.com/$GITHUB_REPO/releases/tag/v$VERSION"
 fi
-if [ -f "$WEBSITE_PUBLIC/appcast.xml" ]; then
-    echo "  - Website: $WEBSITE_PUBLIC/appcast.xml"
+if [ -f "$PAGES_DIR/appcast.xml" ]; then
+    echo "  - Pages: $PAGES_DIR/appcast.xml"
 fi

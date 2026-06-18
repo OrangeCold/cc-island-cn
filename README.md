@@ -1,7 +1,7 @@
 > **基于 [vibe-notch](https://github.com/farouqaldori/vibe-notch)（Apache-2.0）二次开发** · 原作者 [farouqaldori](https://github.com/farouqaldori)
 
 <div align="center">
-  <img src="ClaudeIsland/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="100" height="100">
+  <img src="CcIslandCn/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="100" height="100">
   <h3 align="center">cc-island-cn</h3>
   <p align="center">
     一款 macOS 菜单栏应用，为 Claude Code CLI 会话带来灵动岛式的实时通知。
@@ -34,7 +34,7 @@
 下载最新 [Release](https://github.com/OrangeCold/cc-island-cn/releases/latest)，或从源码构建：
 
 ```bash
-xcodebuild -scheme ClaudeIsland -configuration Release build
+xcodebuild -scheme CcIslandCn -configuration Release build
 ```
 
 ## 工作原理
