@@ -1,3 +1,5 @@
+> **Based on [vibe-notch](https://github.com/farouqaldori/vibe-notch)** (Apache-2.0) · 原作者 [farouqaldori](https://github.com/farouqaldori)
+
 <div align="center">
   <img src="ClaudeIsland/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="100" height="100">
   <h3 align="center">Vibe Notch (previously Claude Island)</h3>
@@ -47,12 +49,7 @@ When Claude needs permission to run a tool, the notch expands with approve/deny 
 
 ## Analytics
 
-Vibe Notch uses Mixpanel to collect anonymous usage data:
-
-- **App Launched** — App version, build number, macOS version
-- **Session Started** — When a new Claude Code session is detected
-
-No personal data or conversation content is collected.
+cc-island-cn **不收集任何用户数据**。原项目 vibe-notch 内置的 Mixpanel 埋点已在二开时彻底移除。
 
 ## License
 
