@@ -22,12 +22,10 @@ jobs:
           fetch-depth: 0  # 回推 appcast 需要完整 history
 
       - name: Select latest Xcode
-        uses: maxim-lobuchenkou/xcode-select@v1
-        with:
-          version: 'latest'
-
-      - name: Show environment
         run: |
+          LATEST_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "Selecting $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE"
           xcodebuild -version
           sw_vers
 
