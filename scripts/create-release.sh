@@ -44,41 +44,51 @@ mkdir -p "$RELEASE_DIR"
 # ============================================
 echo "=== Step 1: Notarizing ==="
 
-# Check if keychain profile exists
-if ! xcrun notarytool history --keychain-profile "$KEYCHAIN_PROFILE" &>/dev/null; then
-    echo ""
-    echo "No keychain profile found. Set up credentials with:"
-    echo ""
-    echo "  xcrun notarytool store-credentials \"$KEYCHAIN_PROFILE\" \\"
-    echo "      --apple-id \"your@email.com\" \\"
-    echo "      --team-id \"95DR4R5FX6\" \\"
-    echo "      --password \"xxxx-xxxx-xxxx-xxxx\""
-    echo ""
-    echo "Create an app-specific password at: https://appleid.apple.com"
-    echo ""
-    read -p "Skip notarization for now? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-    SKIP_NOTARIZATION=true
-    echo "WARNING: Skipping notarization. Users will see Gatekeeper warnings!"
+# 断点续传：先检查 app 是否已有通过的公证。`stapler staple` 成功 = Apple
+# 服务器已有匹配的 Accepted 公证 ticket（按 bundle id + version 索引），直接
+# 复用并装订，跳过重新提交 + 等待。
+# 适用场景：上次运行在公证通过后中断（如手动关闭终端），重新跑时复用已有结果。
+# 若 app 内容已变（重新 build）或从未提交过，staple 会失败 → 进入正常提交流程。
+if xcrun stapler staple "$APP_PATH" >/dev/null 2>&1; then
+    echo "✓ 检测到已通过的公证（app 可 staple），复用已有结果，跳过重新提交"
 else
-    # Create zip for notarization
-    ZIP_PATH="$BUILD_DIR/$APP_NAME-$VERSION.zip"
-    echo "Creating zip for notarization..."
-    ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+    # 没有可用公证，走正常提交流程
+    # Check if keychain profile exists
+    if ! xcrun notarytool history --keychain-profile "$KEYCHAIN_PROFILE" &>/dev/null; then
+        echo ""
+        echo "No keychain profile found. Set up credentials with:"
+        echo ""
+        echo "  xcrun notarytool store-credentials \"$KEYCHAIN_PROFILE\" \\"
+        echo "      --apple-id \"your@email.com\" \\"
+        echo "      --team-id \"95DR4R5FX6\" \\"
+        echo "      --password \"xxxx-xxxx-xxxx-xxxx\""
+        echo ""
+        echo "Create an app-specific password at: https://appleid.apple.com"
+        echo ""
+        read -p "Skip notarization for now? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+        SKIP_NOTARIZATION=true
+        echo "WARNING: Skipping notarization. Users will see Gatekeeper warnings!"
+    else
+        # Create zip for notarization
+        ZIP_PATH="$BUILD_DIR/$APP_NAME-$VERSION.zip"
+        echo "Creating zip for notarization..."
+        ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
 
-    echo "Submitting for notarization..."
-    xcrun notarytool submit "$ZIP_PATH" \
-        --keychain-profile "$KEYCHAIN_PROFILE" \
-        --wait
+        echo "Submitting for notarization..."
+        xcrun notarytool submit "$ZIP_PATH" \
+            --keychain-profile "$KEYCHAIN_PROFILE" \
+            --wait
 
-    echo "Stapling notarization ticket..."
-    xcrun stapler staple "$APP_PATH"
+        echo "Stapling notarization ticket..."
+        xcrun stapler staple "$APP_PATH"
 
-    rm "$ZIP_PATH"
-    echo "Notarization complete!"
+        rm "$ZIP_PATH"
+        echo "Notarization complete!"
+    fi
 fi
 
 echo ""

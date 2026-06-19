@@ -1,0 +1,83 @@
+name: Release
+
+# 触发：推送 v* 标签（如 v1.4.0），或在 Actions 页面手动运行
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+# 发 Release + 回推 appcast 都需要写权限
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 回推 appcast 需要完整 history
+
+      - name: Select latest Xcode
+        uses: maxim-lobuchenkou/xcode-select@v1
+        with:
+          version: 'latest'
+
+      - name: Show environment
+        run: |
+          xcodebuild -version
+          sw_vers
+
+      # 导入 Developer ID Application 证书到 runner 临时 keychain
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+
+      # 存公证凭证到 keychain（create-release.sh 用 profile 名 CcIslandCn 取用）
+      - name: Store notarytool credentials
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          xcrun notarytool store-credentials "CcIslandCn" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD"
+
+      # 恢复 Sparkle EdDSA 私钥（sign_update / generate_appcast 用）
+      - name: Restore Sparkle private key
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          mkdir -p .sparkle-keys
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > .sparkle-keys/eddsa_private_key
+          chmod 600 .sparkle-keys/eddsa_private_key
+
+      # 构建：archive + 导出签名 app
+      - name: Build
+        run: ./scripts/build.sh
+
+      # 公证 + DMG + Sparkle 签名 + 发 GitHub Release + 生成 appcast
+      - name: Notarize, package and publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/create-release.sh
+
+      # 回推 appcast 到 main，触发 GitHub Pages 重新部署
+      - name: Push appcast (trigger GitHub Pages)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/appcast.xml
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: appcast ${{ github.ref_name }}"
+            git push origin HEAD:main
+          else
+            echo "no appcast changes to push"
+          fi

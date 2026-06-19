@@ -2,6 +2,11 @@
 # Build CcIslandCn for release
 set -e
 
+# xcpretty 是可选的输出美化工具；未安装时透传输出，避免 pipe 因命令缺失触发 SIGPIPE 中断 build
+if ! command -v xcpretty >/dev/null 2>&1; then
+    xcpretty() { cat; }
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_DIR/build"
