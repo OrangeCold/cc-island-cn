@@ -8,6 +8,9 @@
 
 import AppKit
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.claudeisland", category: "AppLanguage")
 
 /// 用户可选的语言。`.system` 表示跟随系统语言（不写 AppleLanguages）。
 enum AppLanguage: String, CaseIterable {
@@ -29,17 +32,20 @@ enum AppLanguage: String, CaseIterable {
     }
 
     /// 重启自身。成功启动新实例后终止当前进程并回调 true；失败回调 false（调用方提示手动重启）。
+    /// completion is called on the main thread.
     static func relaunch(completion: @escaping (Bool) -> Void) {
         let bundleURL = URL(fileURLWithPath: Bundle.main.bundlePath)
         let configuration = NSWorkspace.OpenConfiguration()
         NSWorkspace.shared.openApplication(at: bundleURL, configuration: configuration) { _, error in
+            let result: Bool
             if let error {
-                print("Relaunch failed: \(error)")
-                completion(false)
+                logger.error("Relaunch failed: \(error.localizedDescription)")
+                result = false
             } else {
                 DispatchQueue.main.async { NSApp.terminate(nil) }
-                completion(true)
+                result = true
             }
+            DispatchQueue.main.async { completion(result) }
         }
     }
 }

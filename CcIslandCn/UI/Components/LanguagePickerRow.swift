@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+import os
+
+private let logger = Logger(subsystem: "com.claudeisland", category: "LanguagePickerRow")
 
 struct LanguagePickerRow: View {
     @State private var isExpanded: Bool = false
@@ -71,7 +74,7 @@ struct LanguagePickerRow: View {
             Button("Restart Now") {
                 AppLanguage.relaunch { ok in
                     if !ok {
-                        print("Relaunch failed — user should restart manually")
+                        logger.error("Relaunch failed — user should restart manually")
                     }
                 }
             }
@@ -96,11 +99,7 @@ struct LanguagePickerRow: View {
     /// 语言名：Follow System 走本地化；简体中文 / English 固定显示（语言名用各自语言是语言选择器惯例）。
     @ViewBuilder
     private func displayNameView(_ language: AppLanguage) -> some View {
-        switch language {
-        case .system: Text("Follow System")
-        case .zhHans: Text(verbatim: "简体中文")
-        case .en: Text(verbatim: "English")
-        }
+        languageDisplayNameView(language)
     }
 }
 
@@ -143,10 +142,15 @@ private struct LanguageOptionRow: View {
 
     @ViewBuilder
     private var displayName: some View {
-        switch language {
-        case .system: Text("Follow System")
-        case .zhHans: Text(verbatim: "简体中文")
-        case .en: Text(verbatim: "English")
-        }
+        languageDisplayNameView(language)
+    }
+}
+
+@ViewBuilder
+fileprivate func languageDisplayNameView(_ language: AppLanguage) -> some View {
+    switch language {
+    case .system: Text("Follow System")
+    case .zhHans: Text(verbatim: "简体中文")
+    case .en: Text(verbatim: "English")
     }
 }
