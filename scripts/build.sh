@@ -32,7 +32,7 @@ xcodebuild archive \
     -archivePath "$ARCHIVE_PATH" \
     -destination "generic/platform=macOS" \
     ENABLE_HARDENED_RUNTIME=YES \
-    CODE_SIGN_STYLE=Automatic \
+    CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="Developer ID Application" \
     2>&1 | xcpretty
 ARCHIVE_EXIT=${PIPESTATUS[0]}
@@ -46,7 +46,7 @@ if [ "$ARCHIVE_EXIT" -ne 0 ]; then
         -archivePath "$ARCHIVE_PATH" \
         -destination "generic/platform=macOS" \
         ENABLE_HARDENED_RUNTIME=YES \
-        CODE_SIGN_STYLE=Automatic \
+        CODE_SIGN_STYLE=Manual \
         CODE_SIGN_IDENTITY="Developer ID Application"
     exit 1
 fi
