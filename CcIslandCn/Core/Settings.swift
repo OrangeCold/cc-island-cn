@@ -39,6 +39,7 @@ enum AppSettings {
     private enum Keys {
         static let notificationSound = "notificationSound"
         static let claudeDirectoryName = "claudeDirectoryName"
+        static let appLanguage = "appLanguage"
     }
 
     // MARK: - Notification Sound
@@ -69,6 +70,21 @@ enum AppSettings {
         }
         set {
             defaults.set(newValue.trimmingCharacters(in: .whitespaces), forKey: Keys.claudeDirectoryName)
+        }
+    }
+
+    // MARK: - App Language
+
+    /// 用户语言选择。未知值（旧版无 key / 手改 plist 的非法值）回退 `.system`（跟随系统）。
+    static var appLanguage: AppLanguage {
+        get {
+            guard let rawValue = defaults.string(forKey: Keys.appLanguage) else {
+                return .system
+            }
+            return AppLanguage(rawValue: rawValue) ?? .system
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Keys.appLanguage)
         }
     }
 }
