@@ -12,7 +12,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FD33FD5D2EDF32D7002A6548 /* CcIslandCn.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "CcIslandCn.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD33FD5D2EDF32D7002A6548 /* CcIslandCn.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CcIslandCn.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -113,6 +113,7 @@
 			knownRegions = (
 				en,
 				Base,
+				zh-Hans,
 			);
 			mainGroup = FD33FD542EDF32D7002A6548;
 			minimizedProjectReferenceProxies = 1;
@@ -295,7 +296,7 @@
 				);
 				MARKETING_VERSION = 1.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.celestial.CcIslandCn;
-				PRODUCT_NAME = "CcIslandCn";
+				PRODUCT_NAME = CcIslandCn;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -330,7 +331,7 @@
 				);
 				MARKETING_VERSION = 1.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.celestial.CcIslandCn;
-				PRODUCT_NAME = "CcIslandCn";
+				PRODUCT_NAME = CcIslandCn;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
