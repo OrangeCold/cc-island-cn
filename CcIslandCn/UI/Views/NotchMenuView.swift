@@ -310,7 +310,7 @@ struct UpdateRow: View {
         }
     }
 
-    private var label: String {
+    private var label: LocalizedStringKey {
         switch updateManager.state {
         case .idle:
             return "Check for Updates"
@@ -446,7 +446,7 @@ struct AccessibilityRow: View {
 
 struct MenuRow: View {
     let icon: String
-    let label: String
+    let label: LocalizedStringKey
     var isDestructive: Bool = false
     let action: () -> Void
 
@@ -488,7 +488,7 @@ struct MenuRow: View {
 
 struct MenuToggleRow: View {
     let icon: String
-    let label: String
+    let label: LocalizedStringKey
     let isOn: Bool
     let action: () -> Void
 
@@ -512,7 +512,7 @@ struct MenuToggleRow: View {
                     .fill(isOn ? TerminalColors.green : Color.white.opacity(0.3))
                     .frame(width: 6, height: 6)
 
-                Text(isOn ? "On" : "Off")
+                Text(isOn ? LocalizedStringKey("On") : LocalizedStringKey("Off"))
                     .font(.system(size: 11))
                     .foregroundColor(.white.opacity(0.4))
             }

@@ -157,7 +157,7 @@ struct ClaudeDirPickerRow: View {
 // MARK: - Option Row (Inline)
 
 private struct ClaudeDirOptionRow: View {
-    let label: String
+    let label: LocalizedStringKey
     let sublabel: String?
     let isSelected: Bool
     let action: () -> Void
