@@ -142,7 +142,20 @@ actor SessionStore {
 
         let newPhase = event.determinePhase()
 
-        if session.phase.canTransition(to: newPhase) {
+        // SubagentStart/SubagentStop are subagent-lifecycle signals, not
+        // main-turn signals. When the main turn already stopped
+        // (waitingForInput/idle), a late subagent event — most often a
+        // background or recap subagent finishing long after Stop — must NOT
+        // drag the session back to processing. The session is done; a stray
+        // subagent reporting in doesn't change that. During a normal main
+        // turn the session is already processing, so this guard is a no-op
+        // there and only suppresses the erroneous revival.
+        let isSubagentLifecycle = event.event == "SubagentStart" || event.event == "SubagentStop"
+        let mainTurnAlreadyStopped = session.phase == .waitingForInput || session.phase == .idle
+
+        if isSubagentLifecycle && mainTurnAlreadyStopped {
+            Self.logger.debug("Ignoring \(event.event, privacy: .public) phase change — main turn already stopped (\(String(describing: session.phase), privacy: .public))")
+        } else if session.phase.canTransition(to: newPhase) {
             session.phase = newPhase
         } else {
             Self.logger.debug("Invalid transition: \(String(describing: session.phase), privacy: .public) -> \(String(describing: newPhase), privacy: .public), ignoring")
