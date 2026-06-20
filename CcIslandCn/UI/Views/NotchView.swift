@@ -54,6 +54,16 @@ struct NotchView: View {
         }
     }
 
+    /// 是否存在已完成（waitingForInput）的会话。无时间窗口，持续判定（区别于 hasWaitingForInput 的 30s 窗口）。
+    private var hasCompletedSession: Bool {
+        sessionMonitor.instances.contains { $0.phase == .waitingForInput }
+    }
+
+    /// 部分完成：有会话在跑（processing/compacting）且另有会话已完成（waitingForInput）。
+    private var isPartiallyComplete: Bool {
+        isAnyProcessing && hasCompletedSession
+    }
+
     // MARK: - Sizing
 
     private var closedNotchSize: CGSize {
@@ -284,6 +294,14 @@ struct NotchView: View {
                     ProcessingSpinner()
                         .matchedGeometryEffect(id: "spinner", in: activityNamespace, isSource: showClosedActivity)
                         .frame(width: viewModel.status == .opened ? 20 : sideWidth)
+                        .overlay(alignment: .topTrailing) {
+                            if isPartiallyComplete {
+                                ReadyForInputIndicatorIcon(size: 10, color: TerminalColors.green)
+                                    .transition(.scale.combined(with: .opacity))
+                                    .offset(x: 4, y: -4)
+                            }
+                        }
+                        .animation(.easeInOut(duration: 0.2), value: isPartiallyComplete)
                         .padding(.trailing, viewModel.status == .opened ? 0 : 4)
                 } else if hasWaitingForInput {
                     // Checkmark for waiting-for-input on the right side
