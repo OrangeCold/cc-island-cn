@@ -57,6 +57,11 @@ jobs:
           printf '%s' "$SPARKLE_PRIVATE_KEY" > .sparkle-keys/eddsa_private_key
           chmod 600 .sparkle-keys/eddsa_private_key
 
+      # create-dmg：让 create-release.sh 打 DMG 时带 Applications 拖拽快捷方式 + 图标布局
+      # （脚本检测不到 create-dmg 会降级为无布局的 hdiutil；macos-latest 默认未预装，需显式安装）
+      - name: Install create-dmg
+        run: brew install create-dmg
+
       # 构建：archive + 导出签名 app
       - name: Build
         run: ./scripts/build.sh
