@@ -46,3 +46,5 @@ CLAUDE.md
 # Apple 签名证书（含私钥，绝不提交）
 *.p12
 *.mobileprovision
+
+poster-work
