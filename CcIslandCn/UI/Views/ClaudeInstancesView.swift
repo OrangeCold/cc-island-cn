@@ -68,9 +68,10 @@ struct ClaudeInstancesView: View {
     private var instancesList: some View {
         ScrollView(.vertical, showsIndicators: false) {
             LazyVStack(spacing: 2) {
-                ForEach(sortedInstances) { session in
+                ForEach(Array(sortedInstances.enumerated()), id: \.element.stableId) { index, session in
                     InstanceRow(
                         session: session,
+                        isTopRow: index == 0,
                         onFocus: { focusSession(session) },
                         onChat: { openChat(session) },
                         onArchive: { archiveSession(session) },
@@ -120,6 +121,7 @@ struct ClaudeInstancesView: View {
 
 struct InstanceRow: View {
     let session: SessionState
+    var isTopRow: Bool = false
     let onFocus: () -> Void
     let onChat: () -> Void
     let onArchive: () -> Void
@@ -263,7 +265,7 @@ struct InstanceRow: View {
             if isWaitingForApproval && isInteractiveTool {
                 // Interactive tools like AskUserQuestion - show chat + terminal buttons
                 HStack(spacing: 8) {
-                    IconButton(icon: "bubble.left") {
+                    IconButton(icon: "bubble.left", tooltip: "View Conversation", tooltipBelow: isTopRow) {
                         onChat()
                     }
 
@@ -280,26 +282,27 @@ struct InstanceRow: View {
                 InlineApprovalButtons(
                     onChat: onChat,
                     onApprove: onApprove,
-                    onReject: onReject
+                    onReject: onReject,
+                    tooltipBelow: isTopRow
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
             } else {
                 HStack(spacing: 8) {
                     // Chat icon - always show
-                    IconButton(icon: "bubble.left") {
+                    IconButton(icon: "bubble.left", tooltip: "View Conversation", tooltipBelow: isTopRow) {
                         onChat()
                     }
 
                     // Focus icon (only for tmux instances with yabai)
                     if session.isInTmux && isYabaiAvailable {
-                        IconButton(icon: "eye") {
+                        IconButton(icon: "eye", tooltip: "Go to Terminal", tooltipBelow: isTopRow) {
                             onFocus()
                         }
                     }
 
                     // Archive button - only for idle or completed sessions
                     if session.phase == .idle || session.phase == .waitingForInput {
-                        IconButton(icon: "archivebox") {
+                        IconButton(icon: "archivebox", tooltip: "Archive Session", tooltipBelow: isTopRow) {
                             onArchive()
                         }
                     }
@@ -362,6 +365,7 @@ struct InlineApprovalButtons: View {
     let onChat: () -> Void
     let onApprove: () -> Void
     let onReject: () -> Void
+    var tooltipBelow: Bool = false
 
     @State private var showChatButton = false
     @State private var showDenyButton = false
@@ -370,7 +374,7 @@ struct InlineApprovalButtons: View {
     var body: some View {
         HStack(spacing: 6) {
             // Chat button
-            IconButton(icon: "bubble.left") {
+            IconButton(icon: "bubble.left", tooltip: "View Conversation", tooltipBelow: tooltipBelow) {
                 onChat()
             }
             .opacity(showChatButton ? 1 : 0)
@@ -424,9 +428,15 @@ struct InlineApprovalButtons: View {
 
 struct IconButton: View {
     let icon: String
+    var tooltip: LocalizedStringKey? = nil
+    var tooltipBelow: Bool = false
     let action: () -> Void
 
     @State private var isHovered = false
+    @State private var showTooltip = false
+    @State private var hoverDelayTask: Task<Void, Never>?
+
+    private let tooltipDelay: UInt64 = 400_000_000 // 0.4s
 
     var body: some View {
         Button {
@@ -442,7 +452,41 @@ struct IconButton: View {
                 )
         }
         .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
+        .onHover { handleHover($0) }
+        .overlay(alignment: tooltipBelow ? .bottom : .top) { tooltipView }
+        .animation(.easeInOut(duration: 0.15), value: showTooltip)
+    }
+
+    private func handleHover(_ hovering: Bool) {
+        isHovered = hovering
+        hoverDelayTask?.cancel()
+        guard hovering, tooltip != nil else {
+            showTooltip = false
+            return
+        }
+        hoverDelayTask = Task {
+            try? await Task.sleep(nanoseconds: tooltipDelay)
+            guard !Task.isCancelled else { return }
+            showTooltip = true
+        }
+    }
+
+    @ViewBuilder
+    private var tooltipView: some View {
+        if showTooltip, let tooltip {
+            Text(tooltip)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.9))
+                .fixedSize()
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color.black.opacity(0.85))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .shadow(color: .black.opacity(0.4), radius: 3)
+                .offset(y: tooltipBelow ? 28 : -28)
+                .allowsHitTesting(false)
+                .transition(.opacity)
+        }
     }
 }
 

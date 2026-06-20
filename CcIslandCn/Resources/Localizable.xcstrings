@@ -196,6 +196,16 @@
         }
       }
     },
+    "Archive Session" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "归档会话"
+          }
+        }
+      }
+    },
     "Auto-detect" : {
       "localizations" : {
         "zh-Hans" : {
@@ -360,7 +370,14 @@
       }
     },
     "Go to Terminal" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳转到终端"
+          }
+        }
+      }
     },
     "Hooks" : {
       "localizations" : {
@@ -684,6 +701,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新失败"
+          }
+        }
+      }
+    },
+    "View Conversation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看对话"
           }
         }
       }
