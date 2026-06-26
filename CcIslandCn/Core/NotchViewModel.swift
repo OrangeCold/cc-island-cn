@@ -45,6 +45,9 @@ class NotchViewModel: ObservableObject {
     @Published var openReason: NotchOpenReason = .unknown
     @Published var contentType: NotchContentType = .instances
     @Published var isHovering: Bool = false
+    /// 收起态灵动岛缩放因子（运行时单一真相，从 AppSettings 读入）。0.6~1.5，默认 1.0。
+    /// 用 CGFloat 避免与几何运算的频繁类型转换；AppSettings 边界处再转 Double。
+    @Published var notchScale: CGFloat = 1.0
 
     // MARK: - Dependencies
 
@@ -61,6 +64,14 @@ class NotchViewModel: ObservableObject {
     var deviceNotchRect: CGRect { geometry.deviceNotchRect }
     var screenRect: CGRect { geometry.screenRect }
     var windowHeight: CGFloat { geometry.windowHeight }
+
+    /// 收起态缩放后的尺寸（NotchView 渲染与 hit-test 共用的单一真相）
+    var scaledNotchSize: CGSize {
+        CGSize(
+            width: deviceNotchRect.width * notchScale,
+            height: deviceNotchRect.height * notchScale
+        )
+    }
 
     /// Dynamic opened size based on content type
     var openedSize: CGSize {
@@ -111,6 +122,7 @@ class NotchViewModel: ObservableObject {
             windowHeight: windowHeight
         )
         self.hasPhysicalNotch = hasPhysicalNotch
+        self.notchScale = CGFloat(AppSettings.notchScale)
         setupEventHandlers()
         observeSelectors()
     }
@@ -157,7 +169,7 @@ class NotchViewModel: ObservableObject {
     private var currentChatSession: SessionState?
 
     private func handleMouseMove(_ location: CGPoint) {
-        let inNotch = geometry.isPointInNotch(location)
+        let inNotch = geometry.isPointInNotch(location, scale: notchScale)
         let inOpened = status == .opened && geometry.isPointInOpenedPanel(location, size: openedSize)
 
         let newHovering = inNotch || inOpened
@@ -191,14 +203,14 @@ class NotchViewModel: ObservableObject {
                 notchClose()
                 // Re-post the click so it reaches the window/app behind us
                 repostClickAt(location)
-            } else if geometry.notchScreenRect().contains(location) {
+            } else if geometry.notchScreenRect(scale: notchScale).contains(location) {
                 // Clicking notch while opened - only close if NOT in chat mode
                 if !isInChatMode {
                     notchClose()
                 }
             }
         case .closed, .popping:
-            if geometry.isPointInNotch(location) {
+            if geometry.isPointInNotch(location, scale: notchScale) {
                 notchOpen(reason: .click)
             }
         }
