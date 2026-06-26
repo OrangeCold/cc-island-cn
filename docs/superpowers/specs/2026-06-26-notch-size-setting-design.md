@@ -307,7 +307,7 @@ NotchSizeSliderRow(viewModel: viewModel)              // 新增
 
 ## 7. 边界情况
 
-1. **设备行为**：无刘海旧设备（fallback `224×38`）调小→减少遮挡（核心场景）；有刘海设备默认贴合、调小露菜单栏、调大覆盖菜单栏。不做分支，全局自由调。
+1. **设备行为**：无刘海旧设备（fallback `224×38`）调小→减少遮挡（核心场景）；有刘海设备默认贴合物理刘海。不做分支，全局自由调。有刘海屏静止态的可见性限制见第 9 条。
 2. **动画**：预览即时跟手（无 spring 延迟）；真实岛收起态变化由现有 `.animation(...value: notchSize)`（`NotchView.swift:180`）自然过渡，无需新增动画代码。
 3. **性能**：拖动高频触发 `NotchView` 重画，但展开态只重画 `NotchMenuView`（含预览），内容轻，可接受。列为观察项，必要时对持久化写加 throttle。
 4. **钳制**：`AppSettings.notchScale` setter 钳到 `0.6~1.5`；Slider `in: 0.6...1.5` 同步约束。
@@ -315,6 +315,7 @@ NotchSizeSliderRow(viewModel: viewModel)              // 新增
 6. **收起态有活动**（processing / permission / waiting）：缩放后 crab / spinner / checkmark 图标尺寸固定（14pt），可能略挤，可接受。
 7. **高度下限**：`headerRow.frame(height: max(24, closedNotchSize.height))`（`NotchView.swift:236`）在 scale < 0.63 时高度钳到 24pt（默认 38pt × 0.6 = 22.8pt → 实际 24pt，差 ≤1.2pt），可忽略。
 8. **预览与真实的固定偏差**：预览用 `frame(scaledNotchSize)` 渲染基准尺寸；真实小条因布局固有内边距比 `deviceNotchRect` 略宽（约 +8pt × scale）。两者不会同屏对比，趋势与比例一致，不影响「观察是否合适」。
+9. **有刘海屏静止态调大不可见（已知限制，设计如此）**：有物理刘海的设备上，静止收起态（无 Claude 活动）`NotchView.isVisible=false`、小条不渲染（贴合物理刘海凹槽的有意设计，见 `NotchView.swift:201/411/433`）。因此有刘海屏调大（scale>1）在**静止态看不到效果**——仅当出现活动（processing/permission/waiting）使小条可见时才看得到缩放。本功能核心场景是无刘海屏（fallback 偏大遮挡），此限制经评估可接受、保持现状。若未来需支持有刘海屏调大，修复点在 `handleStatusChange`/`handleProcessingChange` 的 `isVisible` 隐藏条件：`notchScale > 1` 时不隐藏即可。
 
 ## 8. 本地化
 
@@ -336,7 +337,7 @@ NotchSizeSliderRow(viewModel: viewModel)              // 新增
 ### 手动验证清单（理想环境：无刘海旧设备 + Claude Code 活跃会话）
 
 1. 无刘海设备：调小→收起态变小、遮挡减少；预览实时跟手；点击区跟手。
-2. 有刘海设备：默认贴合；调小两侧露菜单栏；调大覆盖菜单栏。
+2. 有刘海设备：默认贴合；仅当出现活动（小条可见）时才能观察到缩放效果；**静止态调大不可见（已知限制，见第 7 节第 9 条）**。
 3. 百分比显示正确（60%~150%）。
 4. 重启 app：scale 持久化生效。
 5. 换屏 / 多屏：重建 `viewModel`，scale 从 `AppSettings` 读入一致。
