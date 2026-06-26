@@ -43,6 +43,7 @@ struct NotchMenuView: View {
                 SoundPickerRow(soundSelector: soundSelector)
                 ClaudeDirPickerRow()
                 LanguagePickerRow()
+                NotchSizeSliderRow(viewModel: viewModel)
 
                 Divider()
                     .background(Color.white.opacity(0.08))
@@ -530,5 +531,72 @@ struct MenuToggleRow: View {
 
     private var textColor: Color {
         .white.opacity(isHovered ? 1.0 : 0.7)
+    }
+}
+
+// MARK: - Notch Size Slider Row
+
+/// 行内真实尺寸预览：随 scale 实时缩放的收起态小条（1:1 基准尺寸）
+struct NotchSizePreview: View {
+    let scale: CGFloat
+    let baseSize: CGSize          // = viewModel.deviceNotchRect.size
+
+    private var scaledSize: CGSize {
+        CGSize(width: baseSize.width * scale, height: baseSize.height * scale)
+    }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.white.opacity(0.06))          // 模拟菜单栏背景
+            NotchShape(
+                topCornerRadius: 6 * scale,
+                bottomCornerRadius: 14 * scale
+            )
+            .fill(.black)
+            .frame(width: scaledSize.width, height: scaledSize.height)
+        }
+        .frame(height: 64)
+        .padding(.horizontal, 12)
+    }
+}
+
+struct NotchSizeSliderRow: View {
+    @ObservedObject var viewModel: NotchViewModel
+
+    var body: some View {
+        VStack(spacing: 8) {
+            NotchSizePreview(scale: viewModel.notchScale, baseSize: viewModel.deviceNotchRect.size)
+
+            HStack(spacing: 10) {
+                Image(systemName: "aspectratio")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.7))
+                    .frame(width: 16)
+
+                Text("Notch Size")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+
+                Slider(
+                    value: Binding(
+                        get: { viewModel.notchScale },
+                        set: { viewModel.notchScale = $0 }
+                    ),
+                    in: 0.6...1.5                      // 连续，无 step
+                )
+                .tint(.white.opacity(0.5))
+
+                Text("\(Int((viewModel.notchScale * 100).rounded()))%")
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.4))
+                    .frame(width: 36, alignment: .trailing)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+        }
+        .onChange(of: viewModel.notchScale) { _, newValue in
+            AppSettings.notchScale = Double(newValue)  // 持久化（setter 内钳制 0.6~1.5）
+        }
     }
 }

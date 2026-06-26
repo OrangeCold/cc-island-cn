@@ -549,6 +549,16 @@
         }
       }
     },
+    "Notch Size" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "灵动岛大小"
+          }
+        }
+      }
+    },
     "Notification Sound" : {
       "localizations" : {
         "zh-Hans" : {
