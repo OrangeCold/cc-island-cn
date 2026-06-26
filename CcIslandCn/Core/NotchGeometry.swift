@@ -14,13 +14,16 @@ struct NotchGeometry: Sendable {
     let screenRect: CGRect
     let windowHeight: CGFloat
 
-    /// The notch rect in screen coordinates (for hit testing with global mouse position)
-    var notchScreenRect: CGRect {
-        CGRect(
-            x: screenRect.midX - deviceNotchRect.width / 2,
-            y: screenRect.maxY - deviceNotchRect.height,
-            width: deviceNotchRect.width,
-            height: deviceNotchRect.height
+    /// The notch rect in screen coordinates (for hit testing with global mouse position).
+    /// scale 用于收起态缩放（默认 1.0 = 贴合物理刘海尺寸）。
+    func notchScreenRect(scale: CGFloat = 1.0) -> CGRect {
+        let width = deviceNotchRect.width * scale
+        let height = deviceNotchRect.height * scale
+        return CGRect(
+            x: screenRect.midX - width / 2,
+            y: screenRect.maxY - height,
+            width: width,
+            height: height
         )
     }
 
@@ -38,8 +41,8 @@ struct NotchGeometry: Sendable {
     }
 
     /// Check if a point is in the notch area (with padding for easier interaction)
-    func isPointInNotch(_ point: CGPoint) -> Bool {
-        notchScreenRect.insetBy(dx: -10, dy: -5).contains(point)
+    func isPointInNotch(_ point: CGPoint, scale: CGFloat = 1.0) -> Bool {
+        notchScreenRect(scale: scale).insetBy(dx: -10, dy: -5).contains(point)
     }
 
     /// Check if a point is in the opened panel area

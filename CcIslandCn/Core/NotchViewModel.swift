@@ -191,7 +191,7 @@ class NotchViewModel: ObservableObject {
                 notchClose()
                 // Re-post the click so it reaches the window/app behind us
                 repostClickAt(location)
-            } else if geometry.notchScreenRect.contains(location) {
+            } else if geometry.notchScreenRect().contains(location) {
                 // Clicking notch while opened - only close if NOT in chat mode
                 if !isInChatMode {
                     notchClose()
