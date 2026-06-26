@@ -3,12 +3,12 @@
     <channel>
         <title>CcIslandCn</title>
         <item>
-            <title>1.4.2</title>
-            <pubDate>Sat, 20 Jun 2026 08:17:00 +0000</pubDate>
-            <sparkle:version>9</sparkle:version>
-            <sparkle:shortVersionString>1.4.2</sparkle:shortVersionString>
+            <title>1.4.3</title>
+            <pubDate>Fri, 26 Jun 2026 13:26:57 +0000</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>1.4.3</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/OrangeCold/cc-island-cn/releases/download/v1.4.2/CcIslandCn-1.4.2.dmg" length="4022134" type="application/octet-stream" sparkle:edSignature="q9bHibWR5nLpl1Pz+Fi5OlB95rrusVYP8x0vbl5ZSUkVi0ZrLiRBSSVWho91wHo7OiqKd+iizGxxPODfXMOgCg=="/>
+            <enclosure url="https://github.com/OrangeCold/cc-island-cn/releases/download/v1.4.3/CcIslandCn-1.4.3.dmg" length="4033610" type="application/octet-stream" sparkle:edSignature="xi/TpeZfIHYKK0Dwxp9RRuLYAKuJeEV8WdlG78wz7HgxKNGrqNzpAyVtJvJcoZJoHmnXiIawZ57HFlBAVZ/+DQ=="/>
         </item>
     </channel>
 </rss>
