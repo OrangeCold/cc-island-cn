@@ -40,6 +40,7 @@ enum AppSettings {
         static let notificationSound = "notificationSound"
         static let claudeDirectoryName = "claudeDirectoryName"
         static let appLanguage = "appLanguage"
+        static let notchScale = "notchScale"
     }
 
     // MARK: - Notification Sound
@@ -85,6 +86,22 @@ enum AppSettings {
         }
         set {
             defaults.set(newValue.rawValue, forKey: Keys.appLanguage)
+        }
+    }
+
+    // MARK: - Notch Scale
+
+    /// 收起态灵动岛缩放因子。0.6~1.5，默认 1.0（= 当前尺寸）。
+    /// 未设置 key 时回退 1.0；非法/越界值钳制到范围内。
+    static var notchScale: Double {
+        get {
+            guard let value = defaults.object(forKey: Keys.notchScale) as? Double else {
+                return 1.0
+            }
+            return min(max(value, 0.6), 1.5)
+        }
+        set {
+            defaults.set(min(max(newValue, 0.6), 1.5), forKey: Keys.notchScale)
         }
     }
 }
