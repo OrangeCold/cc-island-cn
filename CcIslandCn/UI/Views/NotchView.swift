@@ -67,10 +67,7 @@ struct NotchView: View {
     // MARK: - Sizing
 
     private var closedNotchSize: CGSize {
-        CGSize(
-            width: viewModel.deviceNotchRect.width,
-            height: viewModel.deviceNotchRect.height
-        )
+        viewModel.scaledNotchSize
     }
 
     /// Extra width for expanding activities (like Dynamic Island)
@@ -121,13 +118,13 @@ struct NotchView: View {
     private var topCornerRadius: CGFloat {
         viewModel.status == .opened
             ? cornerRadiusInsets.opened.top
-            : cornerRadiusInsets.closed.top
+            : cornerRadiusInsets.closed.top * viewModel.notchScale
     }
 
     private var bottomCornerRadius: CGFloat {
         viewModel.status == .opened
             ? cornerRadiusInsets.opened.bottom
-            : cornerRadiusInsets.closed.bottom
+            : cornerRadiusInsets.closed.bottom * viewModel.notchScale
     }
 
     private var currentNotchShape: NotchShape {
@@ -156,7 +153,7 @@ struct NotchView: View {
                         .horizontal,
                         viewModel.status == .opened
                             ? cornerRadiusInsets.opened.top
-                            : cornerRadiusInsets.closed.bottom
+                            : cornerRadiusInsets.closed.bottom * viewModel.notchScale
                     )
                     .padding([.horizontal, .bottom], viewModel.status == .opened ? 12 : 0)
                     .background(.black)
@@ -280,12 +277,12 @@ struct NotchView: View {
                 // Closed without activity: empty space
                 Rectangle()
                     .fill(.clear)
-                    .frame(width: closedNotchSize.width - 20)
+                    .frame(width: closedNotchSize.width - 20 * viewModel.notchScale)
             } else {
                 // Closed with activity: black spacer (with optional bounce)
                 Rectangle()
                     .fill(.black)
-                    .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top + (isBouncing ? 16 : 0))
+                    .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0))
             }
 
             // Right side - spinner when processing/pending, checkmark when waiting for input
