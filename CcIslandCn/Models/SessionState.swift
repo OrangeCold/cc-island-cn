@@ -76,7 +76,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         toolTracker: ToolTracker = ToolTracker(),
         subagentState: SubagentState = SubagentState(),
         conversationInfo: ConversationInfo = ConversationInfo(
-            summary: nil, lastMessage: nil, lastMessageRole: nil,
+            summary: nil, customTitle: nil, lastMessage: nil, lastMessageRole: nil,
             lastToolName: nil, firstUserMessage: nil, lastUserMessageDate: nil
         ),
         needsClearReconciliation: Bool = false,
@@ -124,9 +124,9 @@ struct SessionState: Equatable, Identifiable, Sendable {
         return sessionId
     }
 
-    /// Display title: summary > first user message > project name
+    /// 显示标题优先级：自定义标题(/rename) > 摘要 > 首条用户消息 > 项目目录名
     var displayTitle: String {
-        conversationInfo.summary ?? conversationInfo.firstUserMessage ?? projectName
+        conversationInfo.customTitle ?? conversationInfo.summary ?? conversationInfo.firstUserMessage ?? projectName
     }
 
     /// Best hint for matching window title

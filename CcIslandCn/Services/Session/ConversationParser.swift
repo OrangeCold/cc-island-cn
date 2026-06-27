@@ -34,6 +34,7 @@ struct UsageInfo: Equatable {
 
 struct ConversationInfo: Equatable {
     let summary: String?
+    let customTitle: String?  // 用户通过 /rename 设置的自定义标题，显示优先级最高
     let lastMessage: String?
     let lastMessageRole: String?  // "user", "assistant", or "tool"
     let lastToolName: String?  // Tool name if lastMessageRole is "tool"
@@ -110,7 +111,7 @@ actor ConversationParser {
         guard fileManager.fileExists(atPath: sessionFile),
               let attrs = try? fileManager.attributesOfItem(atPath: sessionFile),
               let modDate = attrs[.modificationDate] as? Date else {
-            return ConversationInfo(summary: nil, lastMessage: nil, lastMessageRole: nil, lastToolName: nil, firstUserMessage: nil, lastUserMessageDate: nil)
+            return ConversationInfo(summary: nil, customTitle: nil, lastMessage: nil, lastMessageRole: nil, lastToolName: nil, firstUserMessage: nil, lastUserMessageDate: nil)
         }
 
         if let cached = cache[sessionFile], cached.modificationDate == modDate {
@@ -119,7 +120,7 @@ actor ConversationParser {
 
         guard let data = fileManager.contents(atPath: sessionFile),
               let content = String(data: data, encoding: .utf8) else {
-            return ConversationInfo(summary: nil, lastMessage: nil, lastMessageRole: nil, lastToolName: nil, firstUserMessage: nil, lastUserMessageDate: nil)
+            return ConversationInfo(summary: nil, customTitle: nil, lastMessage: nil, lastMessageRole: nil, lastToolName: nil, firstUserMessage: nil, lastUserMessageDate: nil)
         }
 
         let info = parseContent(content)
@@ -133,6 +134,7 @@ actor ConversationParser {
         let lines = content.components(separatedBy: "\n").filter { !$0.isEmpty }
 
         var summary: String?
+        var customTitle: String?
         var lastMessage: String?
         var lastMessageRole: String?
         var lastToolName: String?
@@ -234,6 +236,11 @@ actor ConversationParser {
                 }
             }
 
+            // 用户通过 /rename 设置的标题：最新值追加在文件末尾，倒序扫描优先命中最新一条
+            if customTitle == nil, type == "custom-title", let title = json["customTitle"] as? String {
+                customTitle = title
+            }
+
             if summary == nil, type == "summary", let summaryText = json["summary"] as? String {
                 summary = summaryText
             }
@@ -245,6 +252,7 @@ actor ConversationParser {
 
         return ConversationInfo(
             summary: summary,
+            customTitle: customTitle,
             lastMessage: Self.truncateMessage(lastMessage, maxLength: 80),
             lastMessageRole: lastMessageRole,
             lastToolName: lastToolName,
