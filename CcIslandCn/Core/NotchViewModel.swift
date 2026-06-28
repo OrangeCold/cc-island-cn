@@ -220,8 +220,10 @@ class NotchViewModel: ObservableObject {
     private func repostClickAt(_ location: CGPoint) {
         // Small delay to let the window's ignoresMouseEvents update
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            // Convert to CGEvent coordinate system (screen coordinates with Y from top-left)
-            guard let screen = NSScreen.main else { return }
+            // CGEvent 全局坐标原点在主屏（带菜单栏的 screens[0]）左上角，
+            // 必须用主屏高度翻转 Y。注意：NSScreen.main 返回的是 key window 所在屏，
+            // 多屏或面板失焦后会漂移到非主屏，导致重投递点击位置偏移。
+            guard let screen = NSScreen.screens.first else { return }
             let screenHeight = screen.frame.height
             let cgPoint = CGPoint(x: location.x, y: screenHeight - location.y)
 

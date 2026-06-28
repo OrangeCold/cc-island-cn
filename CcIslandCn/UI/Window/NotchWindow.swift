@@ -93,8 +93,9 @@ class NotchPanel: NSPanel {
     }
 
     private func repostMouseEvent(_ event: NSEvent, at screenLocation: NSPoint) {
-        // Convert to CGEvent coordinate system (Y from top of screen)
-        guard let screen = NSScreen.main else { return }
+        // CGEvent 全局坐标原点在主屏（带菜单栏的 screens[0]）左上角，翻转必须用主屏高度；
+        // NSScreen.main 是 key window 所在屏，多屏/失焦时会漂移导致偏移。
+        guard let screen = NSScreen.screens.first else { return }
         let screenHeight = screen.frame.height
         let cgPoint = CGPoint(x: screenLocation.x, y: screenHeight - screenLocation.y)
 

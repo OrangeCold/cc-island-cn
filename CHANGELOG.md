@@ -4,6 +4,16 @@ cc-island-cn 基于 [vibe-notch](https://github.com/farouqaldori/vibe-notch)（A
 
 > 与原版的整体差异概览见 [README.md](README.md#与原版-vibe-notch-的差异)；上游同步的运维记录见 [上游同步手册.md](上游同步手册.md)。
 
+## [1.4.5] - 2026-06-28
+
+### 修复
+- **多屏下点击屏幕其他位置鼠标向下偏移**：展开灵动岛后点击面板外部时，应用会用 `CGEvent` 把这次点击重投递给下层窗口。坐标翻转此前误用 `NSScreen.main`（key window 所在屏）的高度，而 `NSEvent.mouseLocation` 与 CGEvent 坐标都锚定主屏（带菜单栏的 `screens[0]`）；多屏下面板失焦后 `NSScreen.main` 漂到外接屏，翻转高度取错，导致重投递点击向下偏移（偏移量 = 错用屏与主屏的高度差）。改为统一取主屏高度，`repostClickAt` 与 `repostMouseEvent` 两处同步修正。
+
+## [1.4.4] - 2026-06-27
+
+### 修复
+- **会话列表支持 `/rename` 自定义标题**：Claude Code 新版 `/rename` 改用 `{type:"custom-title"}` 行存储会话名（不再写入 `type:"summary"` 行）；`ConversationParser` 此前只解析 summary 行，导致用户手动命名的会话在灵动岛列表显示不出自定义名。新增 `customTitle` 字段解析 custom-title 行，`displayTitle` 优先级改为「自定义标题 > 摘要 > 首条用户消息 > 目录名」。
+
 ## [1.4.3] - 2026-06-26
 
 ### 新增
