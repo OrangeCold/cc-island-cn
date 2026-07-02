@@ -164,6 +164,18 @@ struct SessionState: Equatable, Identifiable, Sendable {
         conversationInfo.lastToolName
     }
 
+    /// 当前正在执行 / 待审批的工具：chatItems 里最后一个 running 或 waitingForApproval 的 ToolCallItem。
+    /// 跨会话聚合时由调用方按 `lastActivity` 取最近活跃会话。
+    var currentRunningTool: ToolCallItem? {
+        for item in chatItems.reversed() {
+            if case .toolCall(let tool) = item.type,
+               tool.status == .running || tool.status == .waitingForApproval {
+                return tool
+            }
+        }
+        return nil
+    }
+
     /// Summary
     var summary: String? {
         conversationInfo.summary
