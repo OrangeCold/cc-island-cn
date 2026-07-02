@@ -39,6 +39,15 @@ struct NotchView: View {
         sessionMonitor.instances.contains { $0.phase.isWaitingForApproval }
     }
 
+    /// 跨所有会话取「最近活跃」且当前有 running / 待审批工具的那个工具。
+    /// 用于非刘海屏收起态中间区域展示。多会话不轮播，只取最近一个。
+    private var currentRunningTool: ToolCallItem? {
+        sessionMonitor.instances
+            .filter { $0.currentRunningTool != nil }
+            .max(by: { $0.lastActivity < $1.lastActivity })?
+            .currentRunningTool
+    }
+
     /// Whether any Claude session is waiting for user input (done/ready state) within the display window
     private var hasWaitingForInput: Bool {
         let now = Date()
@@ -279,10 +288,17 @@ struct NotchView: View {
                     .fill(.clear)
                     .frame(width: closedNotchSize.width - 20 * viewModel.notchScale)
             } else {
-                // Closed with activity: black spacer (with optional bounce)
-                Rectangle()
-                    .fill(.black)
-                    .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0))
+                // Closed with activity
+                if !viewModel.hasPhysicalNotch, let tool = currentRunningTool {
+                    // 非刘海屏：中间展示当前工具摘要（刘海屏此处被物理刘海盖住，走 spacer）
+                    ClosedToolLabel(tool: tool)
+                        .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0))
+                } else {
+                    // 刘海屏 / 无 running 工具：维持原黑 spacer
+                    Rectangle()
+                        .fill(.black)
+                        .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0))
+                }
             }
 
             // Right side - spinner when processing/pending, checkmark when waiting for input
