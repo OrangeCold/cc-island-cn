@@ -19,6 +19,7 @@ struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
     @StateObject private var sessionMonitor = ClaudeSessionMonitor()
     @StateObject private var activityCoordinator = NotchActivityCoordinator.shared
+    @StateObject private var closedDisplay = ClosedToolDisplayState()
     @ObservedObject private var updateManager = UpdateManager.shared
     @State private var previousPendingIds: Set<String> = []
     @State private var previousWaitingForInputIds: Set<String> = []
@@ -46,6 +47,11 @@ struct NotchView: View {
             .filter { $0.currentRunningTool != nil }
             .max(by: { $0.lastActivity < $1.lastActivity })?
             .currentRunningTool
+    }
+
+    /// 中间区域实际展示的工具：优先 running，否则取完成后停留窗口内的工具。
+    private var effectiveClosedTool: ToolCallItem? {
+        currentRunningTool ?? closedDisplay.displayedTool
     }
 
     /// Whether any Claude session is waiting for user input (done/ready state) within the display window
@@ -210,6 +216,7 @@ struct NotchView: View {
             if !viewModel.hasPhysicalNotch {
                 isVisible = true
             }
+            closedDisplay.update(running: currentRunningTool)
         }
         .onChange(of: viewModel.status) { oldStatus, newStatus in
             handleStatusChange(from: oldStatus, to: newStatus)
@@ -221,6 +228,10 @@ struct NotchView: View {
             handleProcessingChange()
             handleWaitingForInputChange(instances)
         }
+        .onChange(of: currentRunningTool) { _, running in
+            closedDisplay.update(running: running)
+        }
+        .animation(.easeInOut(duration: 0.25), value: closedDisplay.displayedTool)
     }
 
     // MARK: - Notch Layout
@@ -289,10 +300,11 @@ struct NotchView: View {
                     .frame(width: closedNotchSize.width - 20 * viewModel.notchScale)
             } else {
                 // Closed with activity
-                if !viewModel.hasPhysicalNotch, let tool = currentRunningTool {
+                if !viewModel.hasPhysicalNotch, let tool = effectiveClosedTool {
                     // 非刘海屏：中间展示当前工具摘要（刘海屏此处被物理刘海盖住，走 spacer）
                     ClosedToolLabel(tool: tool)
                         .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0))
+                        .transition(.opacity)
                 } else {
                     // 刘海屏 / 无 running 工具：维持原黑 spacer
                     Rectangle()
