@@ -30,7 +30,7 @@ cc-island-cn 在刘海屏 MacBook 上，收起态中间区域被物理刘海覆�
 | 决策点 | 选择 |
 |--------|------|
 | 展示形态 | 当前单个 running 工具，单行「工具名 · 关键参数」 |
-| 退化（无 running 工具） | 维持现状留空（透明 / 黑 spacer） |
+| 退化（无 running 工具） | 工具完成后停留 ~2 秒再淡出，之后留空（避免快速工具一闪而过） |
 | 待审批工具（waitingForApproval） | 也显示，与 running 同格式 |
 | 多会话 | 取最近开始的那一个，不轮播 |
 | 适用屏幕 | 仅 `!hasPhysicalNotch`（刘海屏不变） |
@@ -84,7 +84,9 @@ var currentRunningTool: ToolCallItem? {
 
 > `ToolCallItem` 自身无时间戳，「最近开始」靠 `toolTracker.inProgress`（`Models/SessionState.swift` 的 `ToolTracker` / `ToolInProgress`，含 `startTime`）。实现时以 `toolTracker.inProgress` 排序为准。
 
-### 2. UI 层：`ClosedToolLabel` 子视图 + 条件渲染
+### 2. UI 层：`ClosedToolLabel` + 显示窗口管理
+
+**新建 `ClosedToolDisplayState`**（`UI/Components/ClosedToolDisplayState.swift`，`@MainActor` `ObservableObject`）：管理中间区域显示窗口。`update(running:)` 由 NotchView 在 `currentRunningTool` 变化及 `onAppear` 时调用——`running` 非空则实时跟随并清空完成态；`running` 变空且当前仍有展示工具时，进入 ~2 秒停留窗口，到期后清空。停留期内若有新 `running` 进入，自动重置窗口切换到新工具。
 
 **新建 `ClosedToolLabel: View`**（`UI/Components/ClosedToolLabel.swift`）：
 
@@ -111,11 +113,13 @@ struct ClosedToolLabel: View {
 
 ```swift
 } else {  // Closed with activity
-    if !viewModel.hasPhysicalNotch, let tool = currentRunningTool {
+    if !viewModel.hasPhysicalNotch, let tool = effectiveClosedTool {
+        // effectiveClosedTool = currentRunningTool ?? closedDisplay.displayedTool
         ClosedToolLabel(tool: tool)
             .frame(width: 中间可用宽度)   // closedNotchSize.width 减去左右图标位与 padding
+            .transition(.opacity)
     } else {
-        // 维持现状：刘海屏（被物理刘海盖住）/ 无 running 工具（留空）
+        // 维持现状：刘海屏（被物理刘海盖住）/ 无 running 工具且不在停留窗口（留空）
         Rectangle()
             .fill(.black)
             .frame(width: closedNotchSize.width
@@ -145,7 +149,8 @@ struct ClosedToolLabel: View {
 |------|------|
 | 非刘海屏 + 有 running 工具 | 中间显示 `工具 · 参数` |
 | 非刘海屏 + 待审批工具 | 中间显示该工具（同格式）+ 右侧橙色图标 |
-| 非刘海屏 + processing 但无 running 工具（模型思考中） | 维持黑 spacer，中间留空 |
+| 非刘海屏 + 工具刚完成（~2 秒内） | 中间继续显示该工具摘要，2 秒后淡出留空 |
+| 非刘海屏 + processing 但无 running 工具（模型思考中 / 停留窗口外） | 维持黑 spacer，中间留空 |
 | 非刘海屏 + 空闲 / 已完成（waitingForInput） | 维持黑 spacer，中间留空 |
 | 多会话同时有 running 工具 | 取最近开始的那一个 |
 | 刘海屏（任意状态） | 永远走 spacer 分支，无变化 |
@@ -186,6 +191,7 @@ struct ClosedToolLabel: View {
 |------|------|
 | `CcIslandCn/Models/SessionState.swift` | 新增 `currentRunningTool` 计算属性 |
 | `CcIslandCn/UI/Components/ClosedToolLabel.swift` | **新建** 子视图 |
-| `CcIslandCn/UI/Views/NotchView.swift` | 新增 `currentRunningTool` 聚合属性；改 `headerRow` 中间分支（`:281-286`）条件渲染 |
-| `CcIslandCn.xcodeproj` | 将 `ClosedToolLabel.swift` 纳入 target |
+| `CcIslandCn/UI/Components/ClosedToolDisplayState.swift` | **新建** 显示窗口管理（@MainActor ObservableObject） |
+| `CcIslandCn/UI/Views/NotchView.swift` | 新增 `currentRunningTool` / `effectiveClosedTool`；改 `headerRow` 中间分支条件渲染；接入 `closedDisplay`（onAppear/onChange 同步 + opacity 过渡） |
+| `CcIslandCn.xcodeproj` | 工程用 `PBXFileSystemSynchronizedRootGroup`，新文件自动纳入，无需手动编辑 |
 | `CHANGELOG.md` | 发版时追加条目 |
