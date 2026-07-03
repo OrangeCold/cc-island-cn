@@ -4,6 +4,11 @@ cc-island-cn 基于 [vibe-notch](https://github.com/farouqaldori/vibe-notch)（A
 
 > 与原版的整体差异概览见 [README.md](README.md#与原版-vibe-notch-的差异)；上游同步的运维记录见 [上游同步手册.md](上游同步手册.md)。
 
+## [1.4.6] - 2026-07-03
+
+### 新增
+- **非刘海屏收起态展示正在执行的工具**：外接显示器或老款 MacBook（无物理刘海）上，收起态中间空白区域显示当前 Claude Code 正在执行的工具摘要（如 `Read · 文件名`、`Bash · 命令`、`Grep · 关键词`），无需展开即可一眼看到进度。工具完成后停留约 2 秒再淡出，避免快速工具（Read / Grep / Edit）一闪而过；刘海屏机型体验不变（中间被物理刘海盖住）。
+
 ## [1.4.5] - 2026-06-28
 
 ### 修复
