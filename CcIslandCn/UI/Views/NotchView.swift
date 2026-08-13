@@ -87,28 +87,21 @@ struct NotchView: View {
 
     /// Extra width for expanding activities (like Dynamic Island)
     private var expansionWidth: CGFloat {
-        // Permission indicator adds width on left side only
-        let permissionIndicatorWidth: CGFloat = hasPendingPermission ? 18 : 0
+        let baseWidth = 2 * max(0, closedNotchSize.height - 12) + 20
 
-        // Expand for processing activity
+        // Expand for processing / permission activity
         if activityCoordinator.expandingActivity.show {
             switch activityCoordinator.expandingActivity.type {
             case .claude:
-                let baseWidth = 2 * max(0, closedNotchSize.height - 12) + 20
-                return baseWidth + permissionIndicatorWidth
+                return baseWidth
             case .none:
                 break
             }
         }
 
-        // Expand for pending permissions (left indicator) or waiting for input (checkmark on right)
-        if hasPendingPermission {
-            return 2 * max(0, closedNotchSize.height - 12) + 20 + permissionIndicatorWidth
-        }
-
-        // Waiting for input just shows checkmark on right, no extra left indicator
-        if hasWaitingForInput {
-            return 2 * max(0, closedNotchSize.height - 12) + 20
+        // 待授权 / 已完成：右侧状态符号需要侧边空间
+        if hasPendingPermission || hasWaitingForInput {
+            return baseWidth
         }
 
         return 0
@@ -278,14 +271,8 @@ struct NotchView: View {
                 HStack(spacing: 4) {
                     ClaudeCrabIcon(size: 14, animateLegs: isProcessing)
                         .matchedGeometryEffect(id: "crab", in: activityNamespace, isSource: showClosedActivity)
-
-                    // Permission indicator only (amber) - waiting for input shows checkmark on right
-                    if hasPendingPermission {
-                        PermissionIndicatorIcon(size: 14, color: Color(red: 0.85, green: 0.47, blue: 0.34))
-                            .matchedGeometryEffect(id: "status-indicator", in: activityNamespace, isSource: showClosedActivity)
-                    }
                 }
-                .frame(width: viewModel.status == .opened ? nil : sideWidth + (hasPendingPermission ? 18 : 0))
+                .frame(width: viewModel.status == .opened ? nil : sideWidth)
                 .padding(.leading, viewModel.status == .opened ? 8 : 0)
             }
 
@@ -313,9 +300,17 @@ struct NotchView: View {
                 }
             }
 
-            // Right side - spinner when processing/pending, checkmark when waiting for input
+            // Right side - status glyph: hand.tap(待授权) / spinner(处理中) / checkmark(已完成)
             if showClosedActivity {
-                if isProcessing || hasPendingPermission {
+                if hasPendingPermission {
+                    // 待授权：琥珀色手指点击，暗示「点开审批」（三态之一）
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(red: 0.85, green: 0.47, blue: 0.34))
+                        .matchedGeometryEffect(id: "spinner", in: activityNamespace, isSource: showClosedActivity)
+                        .frame(width: viewModel.status == .opened ? 20 : sideWidth)
+                        .padding(.trailing, viewModel.status == .opened ? 0 : 4)
+                } else if isProcessing {
                     ProcessingSpinner()
                         .matchedGeometryEffect(id: "spinner", in: activityNamespace, isSource: showClosedActivity)
                         .frame(width: viewModel.status == .opened ? 20 : sideWidth)
@@ -470,6 +465,7 @@ struct NotchView: View {
         let newPendingIds = currentIds.subtracting(previousPendingIds)
 
         if !newPendingIds.isEmpty &&
+           AppSettings.autoExpand &&
            viewModel.status == .closed &&
            !TerminalVisibilityDetector.isTerminalVisibleOnCurrentSpace() {
             viewModel.notchOpen(reason: .notification)

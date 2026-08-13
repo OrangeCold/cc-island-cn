@@ -20,6 +20,7 @@ struct NotchMenuView: View {
     @ObservedObject private var soundSelector = SoundSelector.shared
     @State private var hooksInstalled: Bool = false
     @State private var launchAtLogin: Bool = false
+    @State private var autoExpand: Bool = false
 
     var body: some View {
         // ScrollView so the menu gracefully scrolls when content exceeds the
@@ -82,6 +83,15 @@ struct NotchMenuView: View {
                     }
                 }
 
+                MenuToggleRow(
+                    icon: "rectangle.expand.vertical",
+                    label: "Auto-Expand",
+                    isOn: autoExpand
+                ) {
+                    AppSettings.autoExpand = !AppSettings.autoExpand
+                    autoExpand = AppSettings.autoExpand
+                }
+
                 AccessibilityRow(isEnabled: AXIsProcessTrusted())
 
                 Divider()
@@ -129,6 +139,7 @@ struct NotchMenuView: View {
     private func refreshStates() {
         hooksInstalled = HookInstaller.isInstalled()
         launchAtLogin = SMAppService.mainApp.status == .enabled
+        autoExpand = AppSettings.autoExpand
         screenSelector.refreshScreens()
     }
 }

@@ -41,6 +41,7 @@ enum AppSettings {
         static let claudeDirectoryName = "claudeDirectoryName"
         static let appLanguage = "appLanguage"
         static let notchScale = "notchScale"
+        static let autoExpand = "autoExpand"
     }
 
     // MARK: - Notification Sound
@@ -102,6 +103,21 @@ enum AppSettings {
         }
         set {
             defaults.set(min(max(newValue, 0.6), 1.5), forKey: Keys.notchScale)
+        }
+    }
+
+    // MARK: - Auto Expand
+
+    /// 会话「需要注意」（完成 / 权限请求）时，是否自动从收起态展开灵动岛面板。
+    /// 默认 false（不自动展开）；用户主动的点击 / 悬停展开不受此开关影响。
+    static var autoExpand: Bool {
+        get {
+            defaults.object(forKey: Keys.autoExpand) == nil
+                ? false
+                : defaults.bool(forKey: Keys.autoExpand)
+        }
+        set {
+            defaults.set(newValue, forKey: Keys.autoExpand)
         }
     }
 }
