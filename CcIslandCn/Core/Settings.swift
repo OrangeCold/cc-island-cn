@@ -31,6 +31,14 @@ enum NotificationSound: String, CaseIterable {
     }
 }
 
+/// 收起态中间区域的显示内容（二选一）
+enum ClosedDisplayMode: String, CaseIterable {
+    /// 工具摘要：正在执行的工具名与关键参数（默认）
+    case runningTool = "runningTool"
+    /// 会话进度：已完成会话数 / 存活会话总数（如 1/3）
+    case sessionProgress = "sessionProgress"
+}
+
 enum AppSettings {
     private static let defaults = UserDefaults.standard
 
@@ -42,6 +50,7 @@ enum AppSettings {
         static let appLanguage = "appLanguage"
         static let notchScale = "notchScale"
         static let autoExpand = "autoExpand"
+        static let closedDisplayMode = "closedDisplayMode"
     }
 
     // MARK: - Notification Sound
@@ -103,6 +112,22 @@ enum AppSettings {
         }
         set {
             defaults.set(min(max(newValue, 0.6), 1.5), forKey: Keys.notchScale)
+        }
+    }
+
+    // MARK: - Closed Display Mode
+
+    /// 收起态中间区域显示「工具摘要」还是「会话进度」（已完成会话数 / 存活会话总数）。
+    /// 默认工具摘要；未知值（旧版无 key / 手改 plist 的非法值）回退默认。
+    static var closedDisplayMode: ClosedDisplayMode {
+        get {
+            guard let rawValue = defaults.string(forKey: Keys.closedDisplayMode) else {
+                return .runningTool
+            }
+            return ClosedDisplayMode(rawValue: rawValue) ?? .runningTool
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Keys.closedDisplayMode)
         }
     }
 

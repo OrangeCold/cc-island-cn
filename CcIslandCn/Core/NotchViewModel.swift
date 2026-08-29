@@ -48,6 +48,9 @@ class NotchViewModel: ObservableObject {
     /// 收起态灵动岛缩放因子（运行时单一真相，从 AppSettings 读入）。0.6~1.5，默认 1.0。
     /// 用 CGFloat 避免与几何运算的频繁类型转换；AppSettings 边界处再转 Double。
     @Published var notchScale: CGFloat = 1.0
+    /// 收起态中间区域显示内容（运行时单一真相，从 AppSettings 读入）：
+    /// 工具摘要（默认）/ 会话进度。设置行切换时同步写 AppSettings。
+    @Published var closedDisplayMode: ClosedDisplayMode = .runningTool
 
     // MARK: - Dependencies
 
@@ -83,12 +86,12 @@ class NotchViewModel: ObservableObject {
                 height: 580
             )
         case .menu:
-            // Base height covers all static rows (Back, 3 picker rows, 3 toggles,
+            // Base height covers all static rows (Back, 5 picker rows, slider, 3 toggles,
             // Accessibility, Update, GitHub, Quit + 4 dividers + padding).
             // Picker expansion deltas added on top when expanded.
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 540
+                height: 580
                     + screenSelector.expandedPickerHeight
                     + soundSelector.expandedPickerHeight
                     + claudeDirSelector.expandedPickerHeight
@@ -123,6 +126,7 @@ class NotchViewModel: ObservableObject {
         )
         self.hasPhysicalNotch = hasPhysicalNotch
         self.notchScale = CGFloat(AppSettings.notchScale)
+        self.closedDisplayMode = AppSettings.closedDisplayMode
         setupEventHandlers()
         observeSelectors()
     }

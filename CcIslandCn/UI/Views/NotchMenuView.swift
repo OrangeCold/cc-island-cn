@@ -44,6 +44,7 @@ struct NotchMenuView: View {
                 SoundPickerRow(soundSelector: soundSelector)
                 ClaudeDirPickerRow()
                 LanguagePickerRow()
+                ClosedDisplayModePickerRow(viewModel: viewModel)
                 NotchSizeSliderRow(viewModel: viewModel)
 
                 Divider()

@@ -151,6 +151,16 @@
     "%lld." : {
 
     },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "%lld%%" : {
 
     },
@@ -212,6 +222,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自动检测"
+          }
+        }
+      }
+    },
+    "Auto-Expand" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动展开"
           }
         }
       }
@@ -282,6 +302,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude 目录"
+          }
+        }
+      }
+    },
+    "Closed Display" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起态显示"
           }
         }
       }
@@ -455,16 +485,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "稍后"
-          }
-        }
-      }
-    },
-    "Auto-Expand" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自动展开"
           }
         }
       }
@@ -659,12 +679,32 @@
         }
       }
     },
+    "Running Tool" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行命令"
+          }
+        }
+      }
+    },
     "Screen" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "屏幕"
+          }
+        }
+      }
+    },
+    "Session Progress" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会话进度"
           }
         }
       }
@@ -739,6 +779,9 @@
         }
       }
     },
+    "v%@" : {
+
+    },
     "View Conversation" : {
       "localizations" : {
         "zh-Hans" : {
@@ -748,9 +791,6 @@
           }
         }
       }
-    },
-    "v%@" : {
-
     },
     "Wrote" : {
 

@@ -20,6 +20,7 @@ struct NotchView: View {
     @StateObject private var sessionMonitor = ClaudeSessionMonitor()
     @StateObject private var activityCoordinator = NotchActivityCoordinator.shared
     @StateObject private var closedDisplay = ClosedToolDisplayState()
+    @StateObject private var closedProgressDisplay = ClosedProgressDisplayState()
     @ObservedObject private var updateManager = UpdateManager.shared
     @State private var previousPendingIds: Set<String> = []
     @State private var previousWaitingForInputIds: Set<String> = []
@@ -77,6 +78,17 @@ struct NotchView: View {
     /// 部分完成：有会话在跑（processing/compacting）且另有会话已完成（waitingForInput）。
     private var isPartiallyComplete: Bool {
         isAnyProcessing && hasCompletedSession
+    }
+
+    /// 会话进度：分母 = 存活会话总数，分子 = 已完成（waitingForInput）会话数。
+    /// 有会话在跑（processing / compacting / 待授权）时实时跟随；
+    /// 全部停下后由 ClosedProgressDisplayState 保留最终进度 2 秒再淡出。
+    private func updateClosedProgressDisplay(_ instances: [SessionState]) {
+        closedProgressDisplay.update(
+            completed: instances.filter { $0.phase == .waitingForInput }.count,
+            total: instances.count,
+            anyRunning: instances.contains { $0.phase.isActive || $0.phase.isWaitingForApproval }
+        )
     }
 
     // MARK: - Sizing
@@ -210,6 +222,7 @@ struct NotchView: View {
                 isVisible = true
             }
             closedDisplay.update(running: currentRunningTool)
+            updateClosedProgressDisplay(sessionMonitor.instances)
         }
         .onChange(of: viewModel.status) { oldStatus, newStatus in
             handleStatusChange(from: oldStatus, to: newStatus)
@@ -220,11 +233,13 @@ struct NotchView: View {
         .onChange(of: sessionMonitor.instances) { _, instances in
             handleProcessingChange()
             handleWaitingForInputChange(instances)
+            updateClosedProgressDisplay(instances)
         }
         .onChange(of: currentRunningTool) { _, running in
             closedDisplay.update(running: running)
         }
         .animation(.easeInOut(duration: 0.25), value: closedDisplay.displayedTool)
+        .animation(.easeInOut(duration: 0.25), value: closedProgressDisplay.displayedProgress)
     }
 
     // MARK: - Notch Layout
@@ -287,16 +302,25 @@ struct NotchView: View {
                     .frame(width: closedNotchSize.width - 20 * viewModel.notchScale)
             } else {
                 // Closed with activity
-                if !viewModel.hasPhysicalNotch, let tool = effectiveClosedTool {
-                    // 非刘海屏：中间展示当前工具摘要（刘海屏此处被物理刘海盖住，走 spacer）
+                // 中间区域宽度：刘海宽 - 顶部圆角 + bounce 扩展
+                let centerWidth = closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0)
+                if !viewModel.hasPhysicalNotch,
+                   viewModel.closedDisplayMode == .sessionProgress,
+                   let progress = closedProgressDisplay.displayedProgress {
+                    // 非刘海屏 + 会话进度模式：中间展示「清单图标 + 已完成/总数」
+                    ClosedSessionProgressLabel(completed: progress.completed, total: progress.total)
+                        .frame(width: centerWidth)
+                        .transition(.opacity)
+                } else if !viewModel.hasPhysicalNotch, let tool = effectiveClosedTool {
+                    // 非刘海屏 + 工具摘要模式（默认）：中间展示当前工具摘要
                     ClosedToolLabel(tool: tool)
-                        .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0))
+                        .frame(width: centerWidth)
                         .transition(.opacity)
                 } else {
-                    // 刘海屏 / 无 running 工具：维持原黑 spacer
+                    // 刘海屏（中间被物理刘海盖住）/ 无可展示内容：维持原黑 spacer
                     Rectangle()
                         .fill(.black)
-                        .frame(width: closedNotchSize.width - cornerRadiusInsets.closed.top * viewModel.notchScale + (isBouncing ? 16 : 0))
+                        .frame(width: centerWidth)
                 }
             }
 
